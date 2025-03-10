@@ -1,0 +1,7 @@
+flask
+uwsgi
+jinja2
+requests
+python-dotenv
+tqdm
+pandas
