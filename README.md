@@ -2,6 +2,8 @@
 
 This tool is designed to fetch and process data from The Blue Alliance (TBA) API. It retrieves teams' information alongside their awards and generates a CSV file and a JSON file with detailed summaries.
 
+# [View HEXFECTA list](https://bcr2200.github.io/hexfecta/html_output/index.html)
+
 ## Prerequisites
 
 1. **Python**: The script requires Python 3 is installed on your machine.
