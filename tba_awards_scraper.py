@@ -444,6 +444,7 @@ def overall_summaries(teams):
 
     return {
         'top_n_hexfectas': top_n_hexfectas,
+        'all_by_hexfectas': sorted_teams,
     }
 
 
@@ -513,12 +514,8 @@ def generate_html():
     with open("frc_team_awards.json", "r") as f:
         data = json.load(f)
 
-    # Define the HTML template
-    html_template = Template('''
-    <html>
-    <head>
-        <title>FRC Team Awards</title>
-        <style>
+    # Define common components
+    style_template = '''
             body {
                 font-family: Arial, sans-serif;
                 margin: 0;
@@ -569,10 +566,29 @@ def generate_html():
             a:hover {
                 text-decoration: underline;
             }
+    '''
+    header_nav = '''
+    <header>
+        <h1>FRC Hexfecta Awards</h1>
+        <nav style="text-align: center; background-color: #0056b3; padding: 10px 0;">
+            <a href="index.html" style="color: white; margin: 0 10px;">All Teams</a>
+            <a href="top.html" style="color: white; margin: 0 10px;">Top Teams</a>
+            <a href="all_hexfecta.html" style="color: white; margin: 0 10px;">All Hexfecta Teams</a>
+        </nav>
+    </header>
+    '''
+
+    # Define the HTML template
+    html_template = Template('''
+    <html>
+    <head>
+        <title>FRC Team {{ team_data.team_number }} Awards</title>
+        <style>
+    ''' + style_template + '''
         </style>
     </head>
     <body>
-        <h1>FRC Team Awards</h1>
+        ''' + header_nav + '''
         <div>
             <h2>Team {{ team_data.team_number }} - {{ team_data.team_name }}</h2>
             <p><strong>Rookie year:</strong> {{ team_data.rookie_year }}</p>
@@ -625,66 +641,43 @@ def generate_html():
         with open(f"html_output/{team_number}.html", "w") as html_file:
             html_file.write(html_content)
 
-    # Create an index HTML page to list all teams
-    index_template = Template('''
+    # Create an all hexfecta page to list all teams that have at least 1 hexfecta
+    all_hexfecta_template = Template('''
     <html>
     <head>
-        <title>FRC Team Awards Index</title>
+        <title>FRC All Hexfecta Awards</title>
         <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f4f4f9;
-                color: #333;
-                line-height: 1.6;
-            }
-            h1, h2, h3 {
-                color: #004085;
-            }
-            h1 {
-                text-align: center;
-                padding: 20px 0;
-                background-color: #007bff;
-                color: #fff;
-                margin: 0;
-            }
-            h2 {
-                margin-top: 20px;
-            }
-            h3 {
-                margin: 15px 0 10px;
-            }
-            p {
-                margin: 10px 0;
-            }
-            ul {
-                list-style-type: square;
-                margin: 10px 20px;
-                padding: 0;
-            }
-            li {
-                margin: 5px 0;
-            }
-            div {
-                padding: 20px;
-                margin: 20px auto;
-                max-width: 800px;
-                background: #fff;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                border-radius: 8px;
-            }
-            a {
-                color: #007bff;
-                text-decoration: none;
-            }
-            a:hover {
-                text-decoration: underline;
-            }
+    ''' + style_template + '''
         </style>
     </head>
     <body>
-        <h1>FRC Team Awards Index</h1>
+        ''' + header_nav + '''
+        <div>
+            <h3>Top {{ data.summaries.all_by_hexfectas|length }} by Hexfectas</h3>
+            <ul>
+            {% for team_data in data.summaries.all_by_hexfectas %}
+                <li><a href="{{ team_data.team_number }}.html">{{ team_data.hexfectas }} - Team {{ team_data.team_number }} - {{ team_data.team_name }} (Rookie year: {{ team_data.rookie_year }})</a></li>
+            {% endfor %}
+            </ul>
+        </div>
+    </body>
+    </html>
+    ''')
+    html_content = all_hexfecta_template.render(data=data)
+    with open("html_output/all_hexfecta.html", "w") as f:
+        f.write(html_content)
+
+    # Create a top page to list top teams
+    top_template = Template('''
+    <html>
+    <head>
+        <title>FRC Top Hexfecta Awards</title>
+        <style>
+    ''' + style_template + '''
+        </style>
+    </head>
+    <body>
+        ''' + header_nav + '''
         <div>
             <h3>Top {{ data.summaries.top_n_hexfectas|length }} by Hexfectas</h3>
             <ul>
@@ -692,10 +685,30 @@ def generate_html():
                 <li><a href="{{ team_data.team_number }}.html">{{ team_data.hexfectas }} - Team {{ team_data.team_number }} - {{ team_data.team_name }} (Rookie year: {{ team_data.rookie_year }})</a></li>
             {% endfor %}
             </ul>
+        </div>
+    </body>
+    </html>
+    ''')
+    html_content = top_template.render(data=data)
+    with open("html_output/top.html", "w") as f:
+        f.write(html_content)
+
+    # Create an index HTML page to list all teams
+    index_template = Template('''
+    <html>
+    <head>
+        <title>FRC Hexfecta Awards Index</title>
+        <style>
+    ''' + style_template + '''
+        </style>
+    </head>
+    <body>
+        ''' + header_nav + '''
+        <div>
             <h3>All Teams</h3>
             <ul>
             {% for team_number, team_data in data.teams.items() %}
-                <li><a href="{{ team_number }}.html">Team {{ team_number }} - {{ team_data['team_name'] }}</a></li>
+                <li><a href="{{ team_data.team_number }}.html">{{ team_data.summaries.hexfectas }} - Team {{ team_data.team_number }} - {{ team_data.team_name }} (Rookie year: {{ team_data.rookie_year }})</a></li>
             {% endfor %}
             </ul>
         </div>
