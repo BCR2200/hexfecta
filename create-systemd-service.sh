@@ -48,5 +48,5 @@ sudo systemctl daemon-reload
 sudo systemctl enable $SERVICENAME.timer
 # Start systemd timer now
 sudo systemctl start $SERVICENAME.timer
-# Start systemd service now
-sudo systemctl start $SERVICENAME.service
+# Start systemd service now, but don't wait for it to complete
+sudo systemctl start --no-block $SERVICENAME.service
