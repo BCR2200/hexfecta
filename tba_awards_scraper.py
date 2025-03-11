@@ -236,7 +236,7 @@ class TBAClient:
             return cache[cache_key]['response'], cache[cache_key][self._GOT_AT_KEY]
         except Exception as e:
             print(f"Exception when calling url ({url}): {e}\n")
-            return None
+            return None, None
 
     def get_all_teams(self, page: int = 0):
         """Fetch a page of FRC teams."""
