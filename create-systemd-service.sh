@@ -39,7 +39,7 @@ Persistent=false
 WantedBy=timers.target
 EOF
 
-sudo cp "${SERVICENAME}.service" "/etc/systemd/system/$SERVICENAME.service"
+sudo cp "${SERVICENAME}.timer" "/etc/systemd/system/$SERVICENAME.timer"
 
 echo "Enabling & starting $SERVICENAME"
 # Reload unit files
