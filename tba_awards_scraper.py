@@ -190,11 +190,11 @@ class TBAClient:
         if cache_result is None:
             return False
         result_time = datetime.datetime.fromisoformat(cache_result[self._GOT_AT_KEY])
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.UTC)
         return now - result_time < datetime.timedelta(hours=24)
 
     def now_timestamp(self):
-        return datetime.datetime.now(datetime.UTC).isoformat()
+        return datetime.datetime.now(datetime.timezone.UTC).isoformat()
 
     def request_with_cache_and_headers(self, url, cache, cache_key):
         etag = None
