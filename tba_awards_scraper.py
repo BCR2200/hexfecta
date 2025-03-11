@@ -462,39 +462,97 @@ def generate_html():
     <html>
     <head>
         <title>FRC Team Awards</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f9;
+                color: #333;
+                line-height: 1.6;
+            }
+            h1, h2, h3 {
+                color: #004085;
+            }
+            h1 {
+                text-align: center;
+                padding: 20px 0;
+                background-color: #007bff;
+                color: #fff;
+                margin: 0;
+            }
+            h2 {
+                margin-top: 20px;
+            }
+            h3 {
+                margin: 15px 0 10px;
+            }
+            p {
+                margin: 10px 0;
+            }
+            ul {
+                list-style-type: square;
+                margin: 10px 20px;
+                padding: 0;
+            }
+            li {
+                margin: 5px 0;
+            }
+            div {
+                padding: 20px;
+                margin: 20px auto;
+                max-width: 800px;
+                background: #fff;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+            }
+            a {
+                color: #007bff;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+        </style>
     </head>
     <body>
         <h1>FRC Team Awards</h1>
         <div>
             <h2>Team {{ team_data.team_number }} - {{ team_data.team_name }}</h2>
-            <p>Rookie year: {{ team_data.rookie_year }}</p>
-            <p>Awards Received: {{ team_data.summaries.awards_received }}</p>
-            <h3>Awards by Category</h3>
-            <ul>
-            {% for category, count in team_data.summaries.awards_by_category.items() %}
-                <li>{{ category }}: {{ count }}</li>
-            {% endfor %}
-            </ul>
+            <p><strong>Rookie year:</strong> {{ team_data.rookie_year }}</p>
+            <h3>Hexfectas</h3>
+            <p><strong>Hexfectas:</strong> {{ team_data.summaries.hexfectas }}</p>
+            <p><strong>Hexfectas Per Year:</strong> {{ team_data.summaries.hexfectas_per_year }}</p>
+            <p><strong>Awards Received:</strong> {{ team_data.summaries.awards_received }}</p>
             <h3>Hexfecta Category Awards</h3>
-            <p>Awards Received: {{ team_data.summaries.hexfecta_category_awards }}</p>
+            <p><strong>Awards Received:</strong> {{ team_data.summaries.hexfecta_category_awards }}</p>
             <h3>Awards by Hexfecta category</h3>
             <ul>
             {% for category, count in team_data.summaries.awards_by_hexfecta_category.items() %}
-                <li>{{ category }}: {{ count }}</li>
+                <li><strong>{{ category }}</strong>: {{ count }}</li>
+            {% endfor %}
+            </ul>
+            <h3>Awards by Category</h3>
+            <ul>
+            {% for category, count in team_data.summaries.awards_by_category.items() %}
+                <li><strong>{{ category }}</strong>: {{ count }}</li>
             {% endfor %}
             </ul>
             <h3>Awards Per Year</h3>
-            <p>Awards Per Year: {{ team_data.summaries.awards_per_year }}</p>
+            <p><strong>Awards Per Year:</strong> {{ team_data.summaries.awards_per_year }}</p>
             <h3>Hexfecta Category Awards Per Year</h3>
-            <p>Hexfecta Category Awards Per Year: {{ team_data.summaries.hexfecta_category_awards_per_year }}</p>
+            <p><strong>Hexfecta Category Awards Per Year:</strong> {{ team_data.summaries.hexfecta_category_awards_per_year }}</p>
             <ul>
             {% for category, per_year in team_data.summaries.awards_per_year_by_hexfecta_category.items() %}
-                <li>{{ category }}: {{ per_year }}</li>
+                <li><strong>{{ category }}</strong>: {{ per_year }}</li>
             {% endfor %}
             </ul>
-            <h3>Hexfectas</h3>
-            <p>Hexfectas: {{ team_data.summaries.hexfectas }}</p>
-            <p>Hexfectas Per Year: {{ team_data.summaries.hexfectas_per_year }}</p>
+            <h3>All Awards</h3>
+            <ul>
+            {% for award in team_data.awards %}
+                <li><strong>{{ award.year }}</strong>: {{ award.name }} -- {{ award.event_key }}</li>
+            {% endfor %}
+            </ul>
         </div>
     </body>
     </html>
@@ -516,14 +574,68 @@ def generate_html():
     <html>
     <head>
         <title>FRC Team Awards Index</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f9;
+                color: #333;
+                line-height: 1.6;
+            }
+            h1, h2, h3 {
+                color: #004085;
+            }
+            h1 {
+                text-align: center;
+                padding: 20px 0;
+                background-color: #007bff;
+                color: #fff;
+                margin: 0;
+            }
+            h2 {
+                margin-top: 20px;
+            }
+            h3 {
+                margin: 15px 0 10px;
+            }
+            p {
+                margin: 10px 0;
+            }
+            ul {
+                list-style-type: square;
+                margin: 10px 20px;
+                padding: 0;
+            }
+            li {
+                margin: 5px 0;
+            }
+            div {
+                padding: 20px;
+                margin: 20px auto;
+                max-width: 800px;
+                background: #fff;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+            }
+            a {
+                color: #007bff;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+        </style>
     </head>
     <body>
         <h1>FRC Team Awards Index</h1>
-        <ul>
-        {% for team_number, team_data in data.items() %}
-            <li><a href="{{ team_number }}.html">Team {{ team_number }} - {{ team_data['team_name'] }}</a></li>
-        {% endfor %}
-        </ul>
+        <div>
+            <ul>
+            {% for team_number, team_data in data.items() %}
+                <li><a href="{{ team_number }}.html">Team {{ team_number }} - {{ team_data['team_name'] }}</a></li>
+            {% endfor %}
+            </ul>
+        </div>
     </body>
     </html>
     ''')
