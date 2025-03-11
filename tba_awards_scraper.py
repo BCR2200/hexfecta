@@ -211,7 +211,7 @@ class TBAClient:
             if etag is not None:
                 args['If-None-Match'] = etag
 
-            response = requests.get(url, headers=args)
+            response = requests.get(url, headers=args, timeout=5)
             response.raise_for_status()
             headers = dict(response.headers)
             etag = None
