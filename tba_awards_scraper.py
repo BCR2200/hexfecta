@@ -189,7 +189,7 @@ class TBAClient:
         _ = self
         if cache_result is None:
             return False
-        result_time = datetime.datetime.fromisoformat(cache_result['got_at'])
+        result_time = datetime.datetime.fromisoformat(cache_result[self._GOT_AT_KEY])
         now = datetime.datetime.now(datetime.UTC)
         return now - result_time < datetime.timedelta(hours=24)
 
@@ -202,7 +202,7 @@ class TBAClient:
         if cache_key in cache:
             cached = cache[cache_key]
             if self.is_fresh_cache_result(cached):
-                return cached['response']
+                return cached['response'], cached[self._GOT_AT_KEY]
             cached_headers = cached["headers"]
             if self._ETAG_HEADER_KEY in cached_headers:
                 etag = cached_headers[self._ETAG_HEADER_KEY]
@@ -233,7 +233,7 @@ class TBAClient:
                 cached = cache[cache_key]
                 cached.update({self._GOT_AT_KEY: self.now_timestamp()})
                 cache[cache_key] = cached
-            return cache[cache_key]['response']
+            return cache[cache_key]['response'], cache[cache_key][self._GOT_AT_KEY]
         except Exception as e:
             print(f"Exception when calling url ({url}): {e}\n")
             return None
@@ -459,7 +459,7 @@ def scrape_and_summarize():
 
         print("Fetching teams...")
         while True:
-            teams = client.get_all_teams(page)
+            teams, team_got_at = client.get_all_teams(page)
             if not teams:  # No more teams
                 break
 
@@ -467,7 +467,7 @@ def scrape_and_summarize():
             for team in tqdm(teams):
                 team_key = team['key']
 
-                awards = client.get_team_awards(team_key)
+                awards, awards_got_at = client.get_team_awards(team_key)
 
                 if awards is not None:
                     award_details = []
@@ -483,7 +483,7 @@ def scrape_and_summarize():
                         "team_number": team['team_number'],
                         "team_name": team['nickname'],
                         'rookie_year': team['rookie_year'],
-                        'last_updated': client.now_timestamp(),
+                        'last_updated': awards_got_at,
                         "awards": award_details,
                         'summaries': team_summaries(team, award_details),
                     }
@@ -499,7 +499,7 @@ def scrape_and_summarize():
         results = {
             'teams': team_awards,
             'summaries': overall_summaries(team_awards),
-            'last_updated': client.now_timestamp(),
+            'last_updated': team_got_at,
         }
 
         with open("frc_team_awards.json", "w") as f:
