@@ -271,7 +271,7 @@ class TBAClient:
 
 def team_summaries(team, awards):
     """
-    Genearate the summaries object.
+    Genearate the summaries object for a team.
     :param team: Dict, looks like this:
     {
         'key': 'frc254',
@@ -397,6 +397,56 @@ def team_summaries(team, awards):
     }
 
 
+def overall_summaries(teams):
+    """
+    Generate the summaries object.
+    :param teams: Dict, where each key represents a team's data:
+    {
+        '254': {
+            'team_number': 254,
+            'team_name': 'The Cheesy Poofs',
+            'rookie_year': 1999,
+            'summaries': {
+                'hexfectas': 3,
+                # Other summary metrics...
+            }
+        }
+    }
+    :return: Dict, containing the top 10 teams by Hexfectas:
+    {
+        'top_n_hexfectas': [
+            {
+                'team_number': 254,
+                'team_name': 'The Cheesy Poofs',
+                'rookie_year': 1999,
+                'hexfectas': 3,
+            },
+            ...
+        ]
+    }
+    """
+    # Extract and sort teams by Hexfectas in descending order
+    teams_with_hexfectas = [
+        {
+            'team_number': team_data['team_number'],
+            'team_name': team_data['team_name'],
+            'rookie_year': team_data['rookie_year'],
+            'hexfectas': team_data['summaries']['hexfectas'],
+        }
+        for team_data in teams.values()
+        if team_data['summaries']['hexfectas'] > 0
+    ]
+    sorted_teams = sorted(teams_with_hexfectas, key=lambda t: t['hexfectas'], reverse=True)
+
+    # Find team 2200 and ensure it is included in the top N list
+    ind_2200 = next((i for i, team in enumerate(sorted_teams) if team['team_number'] == 2200), len(sorted_teams))
+    top_n_hexfectas = sorted_teams[:ind_2200 + 1]
+
+    return {
+        'top_n_hexfectas': top_n_hexfectas,
+    }
+
+
 def scrape_and_summarize():
     client = TBAClient()
     try:
@@ -444,8 +494,13 @@ def scrape_and_summarize():
             print("No team data was collected. Please check your API key and internet connection.")
             return
 
+        results = {
+            'teams': team_awards,
+            'summaries': overall_summaries(team_awards),
+        }
+
         with open("frc_team_awards.json", "w") as f:
-            json.dump(team_awards, f, indent=2)
+            json.dump(results, f, indent=2)
 
         print("\nResults saved to frc_team_awards.csv and frc_team_awards.json")
         print(f"Processed {len(team_awards.keys())} teams")
@@ -454,6 +509,7 @@ def scrape_and_summarize():
 
 
 def generate_html():
+    print(f'Rendering HTML pages')
     with open("frc_team_awards.json", "r") as f:
         data = json.load(f)
 
@@ -558,7 +614,7 @@ def generate_html():
     </html>
     ''')
 
-    for team_number, team_data in data.items():
+    for team_number, team_data in tqdm(data['teams'].items()):
         # Render the template with the data
         html_content = html_template.render(team_data=team_data)
 
@@ -630,8 +686,15 @@ def generate_html():
     <body>
         <h1>FRC Team Awards Index</h1>
         <div>
+            <h3>Top {{ data.summaries.top_n_hexfectas|length }} by Hexfectas</h3>
             <ul>
-            {% for team_number, team_data in data.items() %}
+            {% for team_data in data.summaries.top_n_hexfectas %}
+                <li><a href="{{ team_data.team_number }}.html">{{ team_data.hexfectas }} - Team {{ team_data.team_number }} - {{ team_data.team_name }} (Rookie year: {{ team_data.rookie_year }})</a></li>
+            {% endfor %}
+            </ul>
+            <h3>All Teams</h3>
+            <ul>
+            {% for team_number, team_data in data.teams.items() %}
                 <li><a href="{{ team_number }}.html">Team {{ team_number }} - {{ team_data['team_name'] }}</a></li>
             {% endfor %}
             </ul>
