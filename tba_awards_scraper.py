@@ -727,6 +727,10 @@ def generate_html():
 
 
 def main():
+    use_ipv4_only = os.getenv('USE_IPV4_ONLY')
+    if use_ipv4_only is not None and use_ipv4_only.lower() in ('true', '1', 't', 'y', 'yes'):
+        requests.packages.urllib3.util.connection.HAS_IPV6 = False
+
     scrape_and_summarize()
     generate_html()
 
