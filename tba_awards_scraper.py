@@ -5,8 +5,9 @@ import math
 import os
 import time
 
-import requests
 from dotenv import load_dotenv
+from jinja2 import Template
+import requests
 from tqdm import tqdm
 
 
@@ -396,7 +397,7 @@ def team_summaries(team, awards):
     }
 
 
-def main():
+def scrape_and_summarize():
     client = TBAClient()
     try:
         client.load_from_file()
@@ -430,6 +431,7 @@ def main():
                     team_awards[team['team_number']] = {
                         "team_number": team['team_number'],
                         "team_name": team['nickname'],
+                        'rookie_year': team['rookie_year'],
                         "awards": award_details,
                         'summaries': team_summaries(team, award_details),
                     }
@@ -449,6 +451,90 @@ def main():
         print(f"Processed {len(team_awards.keys())} teams")
     finally:
         client.write_to_file()
+
+
+def generate_html():
+    with open("frc_team_awards.json", "r") as f:
+        data = json.load(f)
+
+    # Define the HTML template
+    html_template = Template('''
+    <html>
+    <head>
+        <title>FRC Team Awards</title>
+    </head>
+    <body>
+        <h1>FRC Team Awards</h1>
+        <div>
+            <h2>Team {{ team_data.team_number }} - {{ team_data.team_name }}</h2>
+            <p>Rookie year: {{ team_data.rookie_year }}</p>
+            <p>Awards Received: {{ team_data.summaries.awards_received }}</p>
+            <h3>Awards by Category</h3>
+            <ul>
+            {% for category, count in team_data.summaries.awards_by_category.items() %}
+                <li>{{ category }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+            <h3>Hexfecta Category Awards</h3>
+            <p>Awards Received: {{ team_data.summaries.hexfecta_category_awards }}</p>
+            <h3>Awards by Hexfecta category</h3>
+            <ul>
+            {% for category, count in team_data.summaries.awards_by_hexfecta_category.items() %}
+                <li>{{ category }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+            <h3>Awards Per Year</h3>
+            <p>Awards Per Year: {{ team_data.summaries.awards_per_year }}</p>
+            <h3>Hexfecta Category Awards Per Year</h3>
+            <p>Hexfecta Category Awards Per Year: {{ team_data.summaries.hexfecta_category_awards_per_year }}</p>
+            <ul>
+            {% for category, per_year in team_data.summaries.awards_per_year_by_hexfecta_category.items() %}
+                <li>{{ category }}: {{ per_year }}</li>
+            {% endfor %}
+            </ul>
+            <h3>Hexfectas</h3>
+            <p>Hexfectas: {{ team_data.summaries.hexfectas }}</p>
+            <p>Hexfectas Per Year: {{ team_data.summaries.hexfectas_per_year }}</p>
+        </div>
+    </body>
+    </html>
+    ''')
+
+    for team_number, team_data in data.items():
+        # Render the template with the data
+        html_content = html_template.render(team_data=team_data)
+
+        # Create HTML output directory if it doesn't exist
+        os.makedirs("html_output", exist_ok=True)
+
+        # Save the HTML content to a file
+        with open(f"html_output/{team_number}.html", "w") as html_file:
+            html_file.write(html_content)
+
+    # Create an index HTML page to list all teams
+    index_template = Template('''
+    <html>
+    <head>
+        <title>FRC Team Awards Index</title>
+    </head>
+    <body>
+        <h1>FRC Team Awards Index</h1>
+        <ul>
+        {% for team_number, team_data in data.items() %}
+            <li><a href="{{ team_number }}.html">Team {{ team_number }} - {{ team_data['team_name'] }}</a></li>
+        {% endfor %}
+        </ul>
+    </body>
+    </html>
+    ''')
+    html_content = index_template.render(data=data)
+    with open("html_output/index.html", "w") as index_file:
+        index_file.write(html_content)
+
+
+def main():
+    scrape_and_summarize()
+    generate_html()
 
 if __name__ == "__main__":
     main() 

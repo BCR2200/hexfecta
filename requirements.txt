@@ -1,5 +1,3 @@
-flask
-uwsgi
 jinja2
 requests
 python-dotenv
