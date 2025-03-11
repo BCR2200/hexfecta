@@ -122,7 +122,7 @@ def main():
         client.load_from_file()
 
         # Create a list to store all teams and their award counts
-        team_awards = []
+        team_awards = {}
         page = 0
 
         print("Fetching teams...")
@@ -147,12 +147,11 @@ def main():
                             'event_key': award['event_key'],
                         })
 
-                    team_awards.append({
+                    team_awards[team['team_number']] = {
                         "team_number": team['team_number'],
                         "team_name": team['nickname'],
-                        "award_count": len(awards),
                         "awards": award_details,
-                    })
+                    }
 
             page += 1
 
@@ -160,34 +159,11 @@ def main():
             print("No team data was collected. Please check your API key and internet connection.")
             return
 
-        # Convert to DataFrame and sort by award count
-        df = pd.DataFrame(team_awards)
-        df = df.sort_values("award_count", ascending=False)
-
-        # Save to CSV and JSON
-        df.to_csv("frc_team_awards.csv", index=False)
-
-        # Create a more detailed JSON output
-        results = {
-            "total_teams_processed": len(df),
-            "total_awards": int(df["award_count"].sum()),
-            "average_awards_per_team": float(df["award_count"].mean()),
-            "median_awards": float(df["award_count"].median()),
-            "teams": df.to_dict("records")
-        }
-
         with open("frc_team_awards.json", "w") as f:
-            json.dump(results, f, indent=2)
+            json.dump(team_awards, f, indent=2)
 
         print("\nResults saved to frc_team_awards.csv and frc_team_awards.json")
-        print(f"Processed {len(df)} teams")
-        print(f"Total awards across all teams: {df['award_count'].sum()}")
-        print(f"Average awards per team: {df['award_count'].mean():.2f}")
-        print(f"Top 5 teams by award count:")
-        try:
-            print(df.head().to_string(index=False))
-        except Exception as e:
-            print(f'exception: {e}')
+        print(f"Processed {len(team_awards.keys())} teams")
     finally:
         client.write_to_file()
 
