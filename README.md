@@ -4,7 +4,7 @@ This tool is designed to fetch and process data from The Blue Alliance (TBA) API
 
 ## Prerequisites
 
-1. **Python**: The script requires Python installed on your machine.
+1. **Python**: The script requires Python 3 is installed on your machine.
 
 ## Setup Instructions
 
@@ -37,15 +37,16 @@ To execute the script and fetch the award information:
     ```
 
 2. After execution, the results will be saved as:
-	- `frc_team_awards.csv`: A CSV file containing teams and their awards.
-	- `frc_team_awards.json`: A JSON file with detailed results and summary statistics.
+	- `frc_team_awards.json`: A JSON file containing teams and their awards, including detailed award information such as award names, types, years, and event keys.
+	- `tba_api_cache.json`: A cache file to store API responses and reduce unnecessary API calls.
 
 ## Output
 
 Upon successful execution, the script will:
-- Fetch all the teams and their awards.
-- Save the results in CSV and JSON formats.
-- Display a summary, including the total number of teams processed, total awards, average awards per team, and the top 5 teams by award count.
+- Fetch all the teams and their awards from The Blue Alliance API
+- Save the detailed results in JSON format
+- Display progress information during execution
+- Cache API responses to improve performance and respect rate limits
 
 ## Notes
 
