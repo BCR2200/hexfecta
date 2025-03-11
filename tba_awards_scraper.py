@@ -483,6 +483,7 @@ def scrape_and_summarize():
                         "team_number": team['team_number'],
                         "team_name": team['nickname'],
                         'rookie_year': team['rookie_year'],
+                        'last_updated': client.now_timestamp(),
                         "awards": award_details,
                         'summaries': team_summaries(team, award_details),
                     }
@@ -498,6 +499,7 @@ def scrape_and_summarize():
         results = {
             'teams': team_awards,
             'summaries': overall_summaries(team_awards),
+            'last_updated': client.now_timestamp(),
         }
 
         with open("frc_team_awards.json", "w") as f:
@@ -626,6 +628,7 @@ def generate_html():
             {% endfor %}
             </ul>
         </div>
+        <p style="text-align: center; font-style: italic;">Last updated: {{ team_data.last_updated }}</p>
     </body>
     </html>
     ''')
@@ -660,6 +663,7 @@ def generate_html():
             {% endfor %}
             </ul>
         </div>
+        <p style="text-align: center; font-style: italic;">Last updated: {{ data.last_updated }}</p>
     </body>
     </html>
     ''')
@@ -686,6 +690,7 @@ def generate_html():
             {% endfor %}
             </ul>
         </div>
+        <p style="text-align: center; font-style: italic;">Last updated: {{ data.last_updated }}</p>
     </body>
     </html>
     ''')
@@ -712,6 +717,7 @@ def generate_html():
             {% endfor %}
             </ul>
         </div>
+        <p style="text-align: center; font-style: italic;">Last updated: {{ data.last_updated }}</p>
     </body>
     </html>
     ''')
