@@ -15,7 +15,7 @@ Type=oneshot
 User=$(whoami)
 Group=$(id -gn)
 WorkingDirectory=$(pwd)
-ExecStart=/bin/bash -c "source .venv/bin/activate && python tba_awards_scraper.py"
+ExecStart=/bin/bash -c "./run.sh"
 
 [Install]
 WantedBy=multi-user.target
