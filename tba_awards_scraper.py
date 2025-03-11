@@ -352,7 +352,7 @@ def team_summaries(team, awards):
     current_year = datetime.datetime.now().year
     if team['rookie_year'] is None:
         team['rookie_year'] = current_year - 1  # Some teams seem to have bad data here
-        print(f'Team has no rookie_year! {team['key']}')
+        print(f'Team has no rookie_year! {team["key"]}')
     team_years = max(current_year - team['rookie_year'] + 1, 1)
 
     awards_received = len(awards)
