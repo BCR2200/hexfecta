@@ -1,15 +1,167 @@
 import copy
 import datetime
+import json
+import math
 import os
+import time
+
 import requests
-import pandas as pd
 from dotenv import load_dotenv
 from tqdm import tqdm
-import time
-import json
+
 
 # Load environment variables
 load_dotenv()
+
+
+# Copied from https://github.com/the-blue-alliance/the-blue-alliance/blob/3dafb6697bd9d5511afaf7240eab733bd11b26a6/consts/award_type.py
+# With modifications for HEXFECTA
+class AwardType(object):
+    """
+    An award type defines a logical type of award that an award falls into.
+    These types are the same across both years and competitions within a year.
+    In other words, an industrial design award from 2013casj and
+    2010cmp will be of award type AwardType.INDUSTRIAL_DESIGN.
+
+    An award type must be enumerated for every type of award ever awarded.
+    ONCE A TYPE IS ENUMERATED, IT MUST NOT BE CHANGED.
+
+    Award types don't care about what type of event (Regional, District,
+    District Championship, Championship Division, Championship Finals, etc.)
+    the award is from. In other words, RCA and CCA are of the same award type.
+    """
+    CHAIRMANS = 0
+    WINNER = 1
+    FINALIST = 2
+
+    WOODIE_FLOWERS = 3
+    DEANS_LIST = 4
+    VOLUNTEER = 5
+    FOUNDERS = 6
+    BART_KAMEN_MEMORIAL = 7
+    MAKE_IT_LOUD = 8
+
+    ENGINEERING_INSPIRATION = 9
+    ROOKIE_ALL_STAR = 10
+    GRACIOUS_PROFESSIONALISM = 11
+    COOPERTITION = 12
+    JUDGES = 13
+    HIGHEST_ROOKIE_SEED = 14
+    ROOKIE_INSPIRATION = 15
+    INDUSTRIAL_DESIGN = 16
+    QUALITY = 17
+    SAFETY = 18
+    SPORTSMANSHIP = 19
+    CREATIVITY = 20
+    ENGINEERING_EXCELLENCE = 21
+    ENTREPRENEURSHIP = 22
+    EXCELLENCE_IN_DESIGN = 23
+    EXCELLENCE_IN_DESIGN_CAD = 24
+    EXCELLENCE_IN_DESIGN_ANIMATION = 25
+    DRIVING_TOMORROWS_TECHNOLOGY = 26
+    IMAGERY = 27
+    MEDIA_AND_TECHNOLOGY = 28
+    INNOVATION_IN_CONTROL = 29
+    SPIRIT = 30
+    WEBSITE = 31
+    VISUALIZATION = 32
+    AUTODESK_INVENTOR = 33
+    FUTURE_INNOVATOR = 34
+    RECOGNITION_OF_EXTRAORDINARY_SERVICE = 35
+    OUTSTANDING_CART = 36
+    WSU_AIM_HIGHER = 37
+    LEADERSHIP_IN_CONTROL = 38
+    NUM_1_SEED = 39
+    INCREDIBLE_PLAY = 40
+    PEOPLES_CHOICE_ANIMATION = 41
+    VISUALIZATION_RISING_STAR = 42
+    BEST_OFFENSIVE_ROUND = 43
+    BEST_PLAY_OF_THE_DAY = 44
+    FEATHERWEIGHT_IN_THE_FINALS = 45
+    MOST_PHOTOGENIC = 46
+    OUTSTANDING_DEFENSE = 47
+    POWER_TO_SIMPLIFY = 48
+    AGAINST_ALL_ODDS = 49
+    RISING_STAR = 50
+    CHAIRMANS_HONORABLE_MENTION = 51
+    CONTENT_COMMUNICATION_HONORABLE_MENTION = 52
+    TECHNICAL_EXECUTION_HONORABLE_MENTION = 53
+    REALIZATION = 54
+    REALIZATION_HONORABLE_MENTION = 55
+    DESIGN_YOUR_FUTURE = 56
+    DESIGN_YOUR_FUTURE_HONORABLE_MENTION = 57
+    SPECIAL_RECOGNITION_CHARACTER_ANIMATION = 58
+    HIGH_SCORE = 59
+    TEACHER_PIONEER = 60
+    BEST_CRAFTSMANSHIP = 61
+    BEST_DEFENSIVE_MATCH = 62
+    PLAY_OF_THE_DAY = 63
+    PROGRAMMING = 64
+    PROFESSIONALISM = 65
+    GOLDEN_CORNDOG = 66
+    MOST_IMPROVED_TEAM = 67
+    WILDCARD = 68
+    CHAIRMANS_FINALIST = 69
+    OTHER = 70
+    AUTONOMOUS = 71
+    INNOVATION_CHALLENGE_SEMI_FINALIST = 72
+    ROOKIE_GAME_CHANGER = 73
+    SKILLS_COMPETITION_WINNER = 74
+    SKILLS_COMPETITION_FINALIST = 75
+    ROOKIE_DESIGN = 76
+    ENGINEERING_DESIGN = 77
+    DESIGNERS = 78
+    CONCEPT = 79
+    GAME_DESIGN_CHALLENGE_WINNER = 80
+    GAME_DESIGN_CHALLENGE_FINALIST = 81
+
+    BLUE_BANNER_AWARDS = {CHAIRMANS, CHAIRMANS_FINALIST, WINNER, WOODIE_FLOWERS, SKILLS_COMPETITION_WINNER, GAME_DESIGN_CHALLENGE_WINNER}
+    INDIVIDUAL_AWARDS = {WOODIE_FLOWERS, DEANS_LIST, VOLUNTEER, FOUNDERS,
+                         BART_KAMEN_MEMORIAL, MAKE_IT_LOUD}
+    NON_JUDGED_NON_TEAM_AWARDS = {  # awards not used in the district point model
+        HIGHEST_ROOKIE_SEED,
+        WOODIE_FLOWERS,
+        DEANS_LIST,
+        VOLUNTEER,
+        WINNER,
+        FINALIST,
+        WILDCARD,
+    }
+
+    SEARCHABLE = {  # Only searchable awards. Obscure & old awards not listed
+        CHAIRMANS: 'Chairman\'s',
+        CHAIRMANS_FINALIST: 'Chairman\'s Finalist',
+        ENGINEERING_INSPIRATION: 'Engineering Inspiration',
+        COOPERTITION: 'Coopertition',
+        CREATIVITY: 'Creativity',
+        ENGINEERING_EXCELLENCE: 'Engineering Excellence',
+        ENTREPRENEURSHIP: 'Entrepreneurship',
+        DEANS_LIST: 'Dean\'s List',
+        BART_KAMEN_MEMORIAL: 'Bart Kamen Memorial',
+        GRACIOUS_PROFESSIONALISM: 'Gracious Professionalism',
+        HIGHEST_ROOKIE_SEED: 'Highest Rookie Seed',
+        IMAGERY: 'Imagery',
+        INDUSTRIAL_DESIGN: 'Industrial Design',
+        SAFETY: 'Safety',
+        INNOVATION_IN_CONTROL: 'Innovation in Control',
+        QUALITY: 'Quality',
+        ROOKIE_ALL_STAR: 'Rookie All Star',
+        ROOKIE_INSPIRATION: 'Rookie Inspiration',
+        SPIRIT: 'Spirit',
+        VOLUNTEER: 'Volunteer',
+        WOODIE_FLOWERS: 'Woodie Flowers',
+        JUDGES: 'Judges\'',
+    }
+
+    HEXFECTA = {
+        ENGINEERING_EXCELLENCE: SEARCHABLE[ENGINEERING_EXCELLENCE],
+        QUALITY: SEARCHABLE[QUALITY],
+        INDUSTRIAL_DESIGN: SEARCHABLE[INDUSTRIAL_DESIGN],
+        CREATIVITY: SEARCHABLE[CREATIVITY],
+        AUTONOMOUS: 'Autonomous',  # Missing, add our own name
+        INNOVATION_IN_CONTROL: SEARCHABLE[INNOVATION_IN_CONTROL],
+    }
+
 
 class TBAClient:
     BASE_URL = "https://www.thebluealliance.com/api/v3"
@@ -87,7 +239,7 @@ class TBAClient:
 
     def get_all_teams(self, page: int = 0):
         """Fetch a page of FRC teams."""
-        url = f"{self.BASE_URL}/teams/{page}/simple"
+        url = f"{self.BASE_URL}/teams/{page}"
         return self.request_with_cache_and_headers(url, self.teams_simple_page_cache, page)
 
     def get_team_awards(self, team_key: str):
@@ -116,6 +268,134 @@ class TBAClient:
             os.remove("tba_api_cache.json")
             print("Corrupted cache file deleted.")
 
+def team_summaries(team, awards):
+    """
+    Genearate the summaries object.
+    :param team: Dict, looks like this:
+    {
+        'key': 'frc254',
+        'team_number': 254,
+        'nickname': 'The Cheesy Poofs',
+        'rookie_year': 1999,
+    }
+    :param awards: List, looks like this:
+    [
+        {
+            'name': 'Rookie All Star Award',
+            'award_type': 10,
+            'event_key': '2025cave',
+            'year': 2025,
+        },
+        ...
+    ]
+    :return: Dict, looks like this:
+    {
+        'awards_received': 100,
+        'awards_by_category': {
+            'Sprit': 94,
+            'Engineering Excellence': 1,
+            'Quality': 1,
+            'Industrial Design': 1,
+            'Creativity': 1,
+            'Autonomous': 1,
+            'Innovation in Control': 1,
+        },
+        'hexfecta_category_awards': 6,
+        'awards_by_hexfecta_category': {
+            'Engineering Excellence': 1,
+            'Quality': 1,
+            'Industrial Design': 1,
+            'Creativity': 1,
+            'Autonomous': 1,
+            'Innovation in Control': 1,
+        },
+        'awards_per_year': 1.0,
+        'hexfecta_category_awards_per_year': 1.0,
+        'awards_per_year_by_hexfecta_category': {
+            'Engineering Excellence': 1.0,
+            'Quality': 1.0,
+            'Industrial Design': 1.0,
+            'Creativity': 1.0,
+            'Autonomous': 1.0,
+            'Innovation in Control': 1.0,
+        },
+        'hexfectas': 1,
+        'hexfectas_per_year': 1.0,
+    }
+    """
+    # Calculate awards received. Count of all awards team has received.
+
+    # Calculate the number of awards in hexfecta categories.
+
+    # Calculate the count of awards in hexfecta categories, grouped by category.
+
+    # Calculate the number of awards per year. If current year is 2025 and
+    # rookie year is 2025, team has participated in 1 year.
+
+    # Calculate the number of awards in hexfecta categories per year.
+    # If current year is 2025 and rookie year is 2025, team has participated
+    # in 1 year.
+
+    # Calculate the number of awards in hexfecta categories per year, grouped
+    # by category.
+    # If current year is 2025 and rookie year is 2025, team has participated
+    # in 1 year.
+
+    # Calculate the number of hexfectas. Defined as the lowest number of awards
+    # in any hexfecta category.
+
+    # Calculate hexfectas per year.
+    # If current year is 2025 and rookie year is 2025, team has participated
+    # in 1 year.
+
+    current_year = datetime.datetime.now().year
+    if team['rookie_year'] is None:
+        team['rookie_year'] = current_year - 1  # Some teams seem to have bad data here
+        print(f'Team has no rookie_year! {team['key']}')
+    team_years = max(current_year - team['rookie_year'] + 1, 1)
+
+    awards_received = len(awards)
+
+    awards_by_category = {}
+    for award in awards:
+        category_name = award['name']
+        awards_by_category[category_name] = awards_by_category.get(category_name, 0) + 1
+
+    hexfecta_awards = [award for award in awards if award['award_type'] in AwardType.HEXFECTA]
+    hexfecta_awards_count = len(hexfecta_awards)
+
+    awards_by_hexfecta_category = {name: 0 for _, name in AwardType.HEXFECTA.items()}
+    for award in hexfecta_awards:
+        category_name = AwardType.HEXFECTA[award['award_type']]
+        awards_by_hexfecta_category[category_name] = awards_by_hexfecta_category.get(category_name, 0) + 1
+
+    awards_per_year = awards_received / team_years
+    hexfecta_awards_per_year = hexfecta_awards_count / team_years
+
+    awards_per_year_by_hexfecta_category = {
+        category: count / team_years for category, count in awards_by_hexfecta_category.items()
+    }
+
+    hexfectas = math.inf
+    for count in awards_by_hexfecta_category.values():
+        hexfectas = min(hexfectas, count)
+
+    hexfectas = 0 if math.isinf(hexfectas) else hexfectas
+    hexfectas_per_year = hexfectas / team_years
+
+    return {
+        'awards_received': awards_received,
+        'awards_by_category': awards_by_category,
+        'hexfecta_category_awards': hexfecta_awards_count,
+        'awards_by_hexfecta_category': awards_by_hexfecta_category,
+        'awards_per_year': awards_per_year,
+        'hexfecta_category_awards_per_year': hexfecta_awards_per_year,
+        'awards_per_year_by_hexfecta_category': awards_per_year_by_hexfecta_category,
+        'hexfectas': hexfectas,
+        'hexfectas_per_year': hexfectas_per_year,
+    }
+
+
 def main():
     client = TBAClient()
     try:
@@ -131,7 +411,7 @@ def main():
             if not teams:  # No more teams
                 break
 
-            print(f"Processing page {page}...")
+            print(f"Processing page {page}, teams {page*500}-{page*500+99}...")
             for team in tqdm(teams):
                 team_key = team['key']
 
@@ -151,7 +431,10 @@ def main():
                         "team_number": team['team_number'],
                         "team_name": team['nickname'],
                         "awards": award_details,
+                        'summaries': team_summaries(team, award_details),
                     }
+                else:
+                    print(f'Warning: Award search for team {team_key} returned None.')
 
             page += 1
 
